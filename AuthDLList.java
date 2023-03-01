@@ -19,41 +19,39 @@ public class AuthDLList {
         boolean initial = true;
 
         while (currNode != null) {
+            // if currentNode is head, then check whether its digest equals to startDigest+"&"+currentNode.file
             if (initial) {
 
                 // Check digest 1 = CHF (startDigest+"&"+file 1)
-                String hash = Hashing.cryptHash(AuthDLList.startDigest + "&" + currNode.file);
+                //String hash = Hashing.cryptHash(AuthDLList.startDigest + "&" + currNode.file);
+                String hash = (AuthDLList.startDigest + "&" + currNode.file);
+
                 if (!currNode.digest.equals(hash)) {
                     throw new IntegrityCheckFailedException();
                 }
-                initial = false;
 
-                // move to the next node
-                currNode = currNode.next;
+                // if it's matched, moved to remaining nodes
+                initial = false;
             }
-            // if reaching the end of the linked list, check if proofCheck is equal to digest n
+            // if currentNode is tail, check if its digest equals to proofCheck
             else if (currNode == currentList.tail) {
-                            /*
-                                    Develop Code here
-                            */
                 // if false, return false
                 if (!check.equals(currentList.tail.digest)) {
                     return false;
                 }
 
-                // if true, and already reaches tail, but move 1 more to break the loop
-                currNode = currNode.next;
-            } else {
-				  /*
-                                    Develop Code here for checking any node in the list
-                            */
-
-
             }
+            // if currentNode is between head and tail, check whether its digest equals to the hash of its previous node's digest +"&"+currentNode.file
+            else {
+                //String hash = Hashing.cryptHash(currNode.previous.digest + "&" + currNode.file);
+                String hash = (currNode.previous.digest + "&" + currNode.file);
 
+                if (!currNode.digest.equals(hash)) {
+                    throw new IntegrityCheckFailedException();
+                }
+            }
             currNode = currNode.next;
         }
-
         return true;
     }
 
@@ -80,7 +78,7 @@ public class AuthDLList {
         } else {
             tail.next = newNode;
             // newNode.digest = Hashing.cryptHash(tail.digest + "&" + newNode.file);
-            newNode.digest = Hashing.cryptHash(tail.digest + "&" + newNode.file);
+            newNode.digest = (tail.digest + "&" + newNode.file);
 
         }
         newNode.previous = tail;
@@ -113,16 +111,21 @@ public class AuthDLList {
             if (head.next == null) {
                 tail = null;
                 head = null;
+                return null;
             } else {
                 head.next.previous = null;
                 head = head.next;
+                head.previous = null;
+                // head.digest = Hashing.cryptHash(AuthDLList.startDigest + "&" + head.file);
+                head.digest = AuthDLList.startDigest + "&" + head.file;
+                // after changing digest of head, digests of all following nodes are changed, so we need to run while loop from node 2 to tail to update digests
+                Node currentNode = head.next;
+                while (currentNode != null) {
+                    currentNode.digest = currentNode.previous.digest + "&" + currentNode.file;
+                    currentNode=currentNode.next;
+                }
+                return tail.digest;
             }
-
-            head.previous = null;
-            // head.digest = Hashing.cryptHash(AuthDLList.startDigest + "&" + head.file);
-            head.digest = AuthDLList.startDigest + "&" + head.file;
-
-            return tail.digest;
         }
         // if teh linked list is empty, throw emptyDLinkedListException
         else {
@@ -157,6 +160,8 @@ public class AuthDLList {
 
 
     // current is the given object of the Doubly linked list
+    // STATIC
+    // current is an object of the class AuthDList
     public static Node retrieveNodeFile(AuthDLList current, String check, String file) throws
             IntegrityCheckFailedException, FileNotFoundException {
 
@@ -170,12 +175,60 @@ public class AuthDLList {
                 }
                 tempNode = tempNode.next;
             }
-            throw new FileNotFoundException();
+            return null;
         } else {
             throw new FileNotFoundException();
         }
         // }
         //return null;
+    }
+
+    // Need to change it to private later
+    // Using for Testing
+    public String toStringBackwardFile() {
+        Node temp = tail;
+        String resultString = "";
+        while (temp != null) {
+            resultString += temp.file + " ";
+            temp = temp.previous;
+        }
+        return resultString;
+    }
+
+    // Need to change it to private later
+    // Using for Testing
+    public String toStringForwardFile() {
+        Node temp = head;
+        String resultString = "";
+        while (temp != null) {
+            resultString += temp.file + " ";
+            temp = temp.next;
+        }
+        return resultString;
+    }
+
+    // Need to change it to private later
+    // Using for Testing
+    public String toStringBackwardDigest() {
+        Node temp = tail;
+        String resultString = "";
+        while (temp != null) {
+            resultString += temp.digest + " ->";
+            temp = temp.previous;
+        }
+        return resultString;
+    }
+
+    // Need to change it to private later
+    // Using for Testing
+    public String toStringForwardDigest() {
+        Node temp = head;
+        String resultString = "";
+        while (temp != null) {
+            resultString += temp.digest + " ->";
+            temp = temp.next;
+        }
+        return resultString;
     }
 
 
